@@ -1,0 +1,11 @@
+# Files to ignore in Expo build process
+.eslintrc.json
+.prettierrc
+jest.config.js
+babel.config.js
+tsconfig.json
+__tests__
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
