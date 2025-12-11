@@ -46,3 +46,9 @@ coverage/
 /ios/build
 /android/app/build
 /android/build
+
+# Supabase
+.branches
+.temp
+supabase/.branches
+supabase/.temp
