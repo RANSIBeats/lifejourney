@@ -6,7 +6,7 @@ Backend service for the Habit AI mobile application. Generates personalized habi
 
 - **AI-Powered Habit Generation**: Uses OpenAI API to generate personalized habits
 - **Mock AI Fallback**: Works offline with pre-configured mock habits
-- **Database Persistence**: Stores users, goals, barriers, and habit plans in SQLite (or Postgres)
+- **Supabase Persistence**: Stores users, goals, barriers, plans, phases, and habits in Supabase
 - **Structured Habit Architecture**: Generates habits in three categories:
   - Foundational: Core daily practices
   - Goal-Specific: Directly aligned with user goals
@@ -18,7 +18,7 @@ Backend service for the Habit AI mobile application. Generates personalized habi
 ## Prerequisites
 
 - Node.js 18+ and npm/yarn
-- For production: PostgreSQL or SQLite
+- Supabase project (URL, anon key, and service role key)
 - OpenAI API key (optional, mock mode available)
 
 ## Installation
@@ -38,8 +38,10 @@ cp .env.example .env
 3. Configure your `.env` file:
 
 ```env
-# Database
-DATABASE_URL="file:./dev.db"
+# Supabase
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # API
 PORT=3000
@@ -57,17 +59,17 @@ CORS_ORIGIN=http://localhost:19000,http://localhost:8081
 
 ## Database Setup
 
-Initialize the database with Prisma:
+All persistence is handled by Supabase. Use the Supabase CLI to apply the SQL schema and optional seed data from `supabase/`:
 
 ```bash
-# Generate Prisma Client
-npm run db:generate
+# Start local Supabase services (optional)
+supabase start
 
-# Run migrations
-npm run db:migrate
+# Apply the latest migration
+supabase db push
 
-# Reset database (development only)
-npm run db:reset
+# Reset and seed (development only)
+supabase db reset --seed
 ```
 
 ## Development
@@ -114,13 +116,18 @@ npm run test:watch
 
 **Endpoint**: `POST /habits/generate`
 
-**Description**: Generate a personalized habit plan for a user based on their goal and barriers.
+**Description**: Generate a personalized habit plan for a user based on their goal and barriers. The authenticated Supabase user (via `Authorization: Bearer <JWT>`) is automatically injected into the request.
+
+**Headers**:
+
+```
+Authorization: Bearer <Supabase JWT>
+```
 
 **Request Body**:
 
 ```json
 {
-  "userId": "user-123",
   "goalTitle": "Get Fit",
   "goalDescription": "Lose weight and build muscle over 6 months",
   "goalCategory": "health",
@@ -206,6 +213,51 @@ npm run test:watch
 }
 ```
 
+### Retrieve Habit Plan
+
+**Endpoint**: `GET /habits/plan/:planId`
+
+**Headers**:
+
+```
+Authorization: Bearer <Supabase JWT>
+```
+
+**Response** (200 OK):
+
+```json
+{
+  "success": true,
+  "data": {
+    "planId": "plan-123",
+    "goalId": "goal-123",
+    "title": "Get Fit - Habit Plan",
+    "phaseCounts": {
+      "phase1": 2,
+      "phase2": 3,
+      "phase3": 2,
+      "phase4": 1
+    },
+    "phases": [
+      { "id": "phase-1", "phaseNumber": 1, "status": "active" },
+      { "id": "phase-2", "phaseNumber": 2, "status": "pending" }
+    ],
+    "habits": [
+      {
+        "id": "habit-1",
+        "title": "Morning Reflection",
+        "description": "Spend 5 minutes reflecting on your goals",
+        "category": "foundational",
+        "phase": 1,
+        "frequency": "daily",
+        "duration": 5,
+        "priority": 8
+      }
+    ]
+  }
+}
+```
+
 ### Health Check
 
 **Endpoint**: `GET /health`
@@ -225,7 +277,9 @@ npm run test:watch
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `DATABASE_URL` | Database connection string | `file:./dev.db` | No |
+| `SUPABASE_URL` | Supabase project URL | - | Yes |
+| `SUPABASE_ANON_KEY` | Supabase anon/public key (mobile clients) | - | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-only) | - | Yes |
 | `PORT` | Server port | `3000` | No |
 | `NODE_ENV` | Environment | `development` | No |
 | `OPENAI_API_KEY` | OpenAI API key | - | No (if using mock) |
@@ -264,26 +318,26 @@ The system sends a detailed prompt to OpenAI that:
 
 **User**
 - Represents a mobile app user
-- Fields: id, email, name, createdAt, updatedAt
+- Fields: id, email, name, created_at, updated_at
 
 **Goal**
 - User's main objective
-- Fields: id, userId, title, description, category, createdAt, updatedAt
+- Fields: id, user_id, title, description, category, created_at, updated_at
 
 **Barrier**
 - Obstacles that might prevent goal achievement
-- Fields: id, userId, goalId, title, description, type, createdAt, updatedAt
+- Fields: id, user_id, goal_id, title, description, type, created_at, updated_at
 - Types: psychological, environmental, social, time-based, etc.
 
 **Habit**
 - Individual habit to build
-- Fields: id, userId, goalId, barrierId (optional), planId, title, description, category, phase, frequency, duration, priority, createdAt, updatedAt
+- Fields: id, user_id, goal_id, barrier_id (optional), plan_id, title, description, category, phase, frequency, duration, priority, created_at, updated_at
 - Categories: foundational, goal-specific, barrier-targeting
 - Phases: 1, 2, 3, 4
 
 **HabitPlan**
 - Collection of habits organized by phase
-- Fields: id, userId, goalId, title, description, phase1Count, phase2Count, phase3Count, phase4Count, createdAt, updatedAt
+- Fields: id, user_id, goal_id, title, description, phase1_count, phase2_count, phase3_count, phase4_count, created_at, updated_at
 
 ## Habit Generation Algorithm
 
@@ -341,7 +395,6 @@ import { useMutation } from '@tanstack/react-query';
 import api from '@/services/api';
 
 interface GenerateHabitsRequest {
-  userId: string;
   goalTitle: string;
   goalDescription?: string;
   goalCategory?: string;
@@ -372,7 +425,6 @@ export function HabitSetupScreen() {
 
   const handleGenerateHabits = () => {
     mutate({
-      userId: 'user-123',
       goalTitle: 'Get Fit',
       goalDescription: 'Lose weight and build muscle',
       goalCategory: 'health',
@@ -412,17 +464,17 @@ if (error) {
 
 ### 1. Schema Changes
 
-When modifying Prisma schema:
+When modifying the Supabase schema, update the SQL migrations under `supabase/migrations/` and apply them with the Supabase CLI:
 
 ```bash
-# Update schema.prisma
-nano prisma/schema.prisma
+# Create a new migration
+supabase migration new add_new_feature
 
-# Create and run migration
-npm run db:migrate
+# Apply the migration locally
+supabase db push
 
-# Update types
-npm run db:generate
+# Reset and reseed (development only)
+supabase db reset --seed
 ```
 
 ### 2. Service Development
@@ -441,11 +493,11 @@ Follow the pattern in `src/services/`:
 # Terminal 1: Start server
 npm run dev
 
-# Terminal 2: Test with curl
+# Terminal 2: Test with curl (replace <token> with a Supabase JWT)
 curl -X POST http://localhost:3000/habits/generate \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
   -d '{
-    "userId": "test-user",
     "goalTitle": "Get Fit",
     "barriers": [{"title": "No time"}]
   }'
@@ -471,28 +523,32 @@ Build and run:
 
 ```bash
 docker build -t habit-ai-server .
-docker run -p 3000:3000 -e DATABASE_URL="..." habit-ai-server
+docker run -p 3000:3000 \
+  -e SUPABASE_URL="https://your-project-ref.supabase.co" \
+  -e SUPABASE_SERVICE_ROLE_KEY="your-service-role-key" \
+  -e SUPABASE_ANON_KEY="your-anon-key" \
+  habit-ai-server
 ```
 
 ### Environment-Specific Configuration
 
 - **Development**: `USE_MOCK_AI=true` or configure OpenAI key
-- **Staging**: Use real OpenAI API with test database
-- **Production**: Full OpenAI integration with PostgreSQL
+- **Staging**: Use a Supabase staging project + real OpenAI API key
+- **Production**: Use the production Supabase project and service role key management
 
 ## Troubleshooting
 
 ### Database Connection Issues
 
 ```bash
-# Check database file exists
-ls -la dev.db
+# Verify Supabase services are running (local development)
+supabase status
 
-# Reset database
-npm run db:reset
+# Re-apply migrations if schema drift occurs
+supabase db push
 
-# Check Prisma schema validity
-npx prisma validate
+# Reset with seed data (development only)
+supabase db reset --seed
 ```
 
 ### OpenAI API Errors
