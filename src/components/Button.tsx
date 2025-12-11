@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
 
 interface ButtonProps {
   title: string;
@@ -7,6 +7,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'secondary';
+  style?: ViewStyle;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -15,6 +16,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   variant = 'primary',
+  style,
 }) => {
   return (
     <TouchableOpacity
@@ -22,6 +24,7 @@ export const Button: React.FC<ButtonProps> = ({
         styles.button,
         variant === 'primary' ? styles.primaryButton : styles.secondaryButton,
         disabled && styles.disabledButton,
+        style,
       ]}
       onPress={onPress}
       disabled={disabled || loading}
