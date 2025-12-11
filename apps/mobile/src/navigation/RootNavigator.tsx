@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { RootStackParamList } from './types';
@@ -6,13 +6,16 @@ import { AuthNavigator } from './AuthNavigator';
 import { OnboardingNavigator } from './OnboardingNavigator';
 import { MainNavigator } from './MainNavigator';
 import { useAuthStore } from '@store/authStore';
-import { useAppStore } from '@store/appStore';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator: React.FC = () => {
-  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
-  const isOnboardingCompleted = useAppStore((state) => state.isOnboardingCompleted);
+  const session = useAuthStore((state) => state.session);
+  const isOnboardingCompleted = useAuthStore(
+    (state) => state.isOnboardingCompleted
+  );
+
+  const isLoggedIn = !!session;
 
   return (
     <NavigationContainer>
