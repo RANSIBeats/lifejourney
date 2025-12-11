@@ -7,10 +7,12 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/types';
 import theme from '@themes/index';
+import { useAuthStore } from '@store/authStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -20,9 +22,35 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
-    // TODO: Implement registration logic
-    console.log('Register:', { name, email, password });
+  const signUp = useAuthStore((state) => state.signUp);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const setError = useAuthStore((state) => state.setError);
+
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Please fill in all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await signUp(email, password, name);
+    } catch (err) {
+      // Error is already set by the store
+      console.error('Registration error:', err);
+    }
   };
 
   return (
@@ -34,10 +62,13 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join us today</Text>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
         <TextInput
           style={styles.input}
           placeholder="Full Name"
           placeholderTextColor={theme.colors.textTertiary}
+          editable={!isLoading}
           value={name}
           onChangeText={setName}
         />
@@ -48,6 +79,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="email-address"
           autoCapitalize="none"
+          editable={!isLoading}
           value={email}
           onChangeText={setEmail}
         />
@@ -57,6 +89,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           placeholder="Password"
           placeholderTextColor={theme.colors.textTertiary}
           secureTextEntry
+          editable={!isLoading}
           value={password}
           onChangeText={setPassword}
         />
@@ -66,12 +99,22 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           placeholder="Confirm Password"
           placeholderTextColor={theme.colors.textTertiary}
           secureTextEntry
+          editable={!isLoading}
           value={confirmPassword}
           onChangeText={setConfirmPassword}
         />
 
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>Create Account</Text>
+        <TouchableOpacity
+          style={[styles.registerButton, isLoading && styles.disabledButton]}
+          onPress={handleRegister}
+          disabled={isLoading}
+          testID="register-button"
+        >
+          {isLoading ? (
+            <ActivityIndicator color={theme.colors.white} />
+          ) : (
+            <Text style={styles.registerButtonText}>Create Account</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -105,6 +148,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.xl,
   },
+  errorText: {
+    color: theme.colors.error,
+    marginBottom: theme.spacing.md,
+    fontSize: theme.typography.bodySmall.fontSize,
+  },
   input: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
@@ -121,6 +169,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     marginTop: theme.spacing.lg,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   registerButtonText: {
     color: theme.colors.white,

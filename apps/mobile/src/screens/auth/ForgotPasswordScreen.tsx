@@ -7,10 +7,12 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/types';
 import theme from '@themes/index';
+import { useAuthStore } from '@store/authStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -18,10 +20,26 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = () => {
-    // TODO: Implement password reset logic
-    console.log('Reset password for:', email);
-    setSubmitted(true);
+  const resetPassword = useAuthStore((state) => state.resetPassword);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const setError = useAuthStore((state) => state.setError);
+
+  const handleSubmit = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await resetPassword(email);
+      setSubmitted(true);
+    } catch (err) {
+      // Error is already set by the store
+      console.error('Password reset error:', err);
+    }
   };
 
   if (submitted) {
@@ -55,18 +73,29 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
           Enter your email to receive a password reset link
         </Text>
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="email-address"
           autoCapitalize="none"
+          editable={!isLoading}
           value={email}
           onChangeText={setEmail}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Send Reset Link</Text>
+        <TouchableOpacity
+          style={[styles.button, isLoading && styles.disabledButton]}
+          onPress={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color={theme.colors.white} />
+          ) : (
+            <Text style={styles.buttonText}>Send Reset Link</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
@@ -98,6 +127,11 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginBottom: theme.spacing.xl,
   },
+  errorText: {
+    color: theme.colors.error,
+    marginBottom: theme.spacing.md,
+    fontSize: theme.typography.bodySmall.fontSize,
+  },
   input: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
@@ -114,6 +148,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
     marginTop: theme.spacing.lg,
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   buttonText: {
     color: theme.colors.white,

@@ -13,18 +13,17 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/types';
 import theme from '@themes/index';
 import { useAuthStore } from '@store/authStore';
-import { useAppStore } from '@store/appStore';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const login = useAuthStore((state) => state.login);
-  const setOnboardingCompleted = useAppStore((state) => state.setOnboardingCompleted);
+  const signIn = useAuthStore((state) => state.signIn);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const error = useAuthStore((state) => state.error);
+  const setError = useAuthStore((state) => state.setError);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -32,16 +31,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    setLoading(true);
-    setError('');
+    setError(null);
 
     try {
-      await login(email, password);
-      setOnboardingCompleted(true);
+      await signIn(email, password);
     } catch (err) {
-      setError('Login failed. Please try again.');
-    } finally {
-      setLoading(false);
+      // Error is already set by the store
+      console.error('Login error:', err);
     }
   };
 
@@ -62,7 +58,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           placeholderTextColor={theme.colors.textTertiary}
           keyboardType="email-address"
           autoCapitalize="none"
-          editable={!loading}
+          editable={!isLoading}
           value={email}
           onChangeText={setEmail}
         />
@@ -72,17 +68,17 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
           placeholder="Password"
           placeholderTextColor={theme.colors.textTertiary}
           secureTextEntry
-          editable={!loading}
+          editable={!isLoading}
           value={password}
           onChangeText={setPassword}
         />
 
         <TouchableOpacity
-          style={[styles.loginButton, loading && styles.disabledButton]}
+          style={[styles.loginButton, isLoading && styles.disabledButton]}
           onPress={handleLogin}
-          disabled={loading}
+          disabled={isLoading}
         >
-          {loading ? (
+          {isLoading ? (
             <ActivityIndicator color={theme.colors.white} />
           ) : (
             <Text style={styles.loginButtonText}>Sign In</Text>
