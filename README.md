@@ -1,313 +1,187 @@
-# Mobile App - React Native with Expo
+# Mobile Onboarding Flow
 
-A modern, production-ready React Native mobile application built with Expo and TypeScript, featuring dark theme design, robust navigation, state management with Zustand, and async data handling with React Query.
+A React Native mobile application featuring a 3-step onboarding wizard for habit formation.
 
 ## Features
 
-- 📱 **Cross-platform**: Runs on iOS and Android
-- 🎨 **Dark Theme**: Comprehensive dark theme tokens and styling system
-- 🧭 **Navigation**: React Navigation with Auth, Onboarding, and Main tab stacks
-- 🔐 **Authentication**: Complete auth flow (Login, Register, Forgot Password)
-- 📊 **State Management**: Zustand for global state management
-- 🔄 **Data Fetching**: React Query (TanStack Query) for efficient async data handling
-- 🌐 **API Client**: Axios with environment-based configuration
-- 📐 **TypeScript**: Full TypeScript support for type safety
-- ✨ **Developer Experience**: ESLint, Prettier, Jest for code quality and testing
+### 3-Step Onboarding Wizard
+
+#### Step 1: North Star Goal
+- Captures the user's primary goal with validation
+- Friendly copy and emoji to guide the user
+- Character limit: 3-200 characters
+- Real-time validation feedback
+
+#### Step 2: Barriers Selection
+- Preset barrier chips (Sleep, Focus, Stress, Time Management, Motivation, Energy)
+- Custom barrier input with add functionality
+- Multiple selection support
+- Remove custom barriers with × button
+- Validation: 1-10 barriers total
+
+#### Step 3: Habit Generation & Display
+- Calls habit generation endpoint (currently stubbed)
+- Displays three habit layers:
+  - **Foundational Habits**: Core well-being habits
+  - **Goal-Specific Habits**: Directly support the North Star goal
+  - **Barrier-Targeting Habits**: Address selected barriers
+- Loading states with activity indicator
+- Error handling with retry functionality
+
+### Persistence
+- Saves onboarding progress to AsyncStorage
+- Users can resume where they left off
+- Automatic state restoration on app restart
+
+### Navigation
+- Progress indicator showing current step (1/3, 2/3, 3/3)
+- Back/Next button controls
+- Step validation before proceeding
+
+## Tech Stack
+
+- **Framework**: React Native with Expo
+- **Language**: TypeScript
+- **State Management**: Zustand
+- **Storage**: @react-native-async-storage/async-storage
+- **HTTP Client**: Axios (for future API integration)
+- **Testing**: Jest + React Native Testing Library
 
 ## Project Structure
 
 ```
-apps/mobile/
-├── src/
-│   ├── screens/
-│   │   ├── auth/           # Authentication screens (Login, Register, ForgotPassword)
-│   │   ├── onboarding/     # Onboarding screens
-│   │   └── main/           # Main app screens (Journey, Profile)
-│   ├── components/         # Reusable UI components
-│   ├── services/           # API and external services
-│   ├── store/              # Zustand stores (auth, app state)
-│   ├── navigation/         # Navigation configuration and types
-│   ├── themes/             # Theme tokens and styling
-│   ├── types/              # TypeScript type definitions
-│   ├── utils/              # Utility functions
-│   └── App.tsx             # Root app component
-├── index.ts                # App entry point
-├── app.json                # Expo configuration
-├── package.json            # Dependencies and scripts
-├── tsconfig.json           # TypeScript configuration
-├── babel.config.js         # Babel configuration with path aliases
-└── jest.config.js          # Jest test configuration
+src/
+├── api/
+│   ├── habits.ts                    # API calls (stubbed)
+│   └── __tests__/
+│       └── habits.test.ts
+├── components/
+│   ├── Button.tsx                   # Reusable button component
+│   ├── Chip.tsx                     # Selectable chip component
+│   ├── HabitCard.tsx               # Habit display card
+│   ├── ProgressIndicator.tsx       # Step progress dots
+│   └── __tests__/
+│       ├── Button.test.tsx
+│       ├── Chip.test.tsx
+│       └── ProgressIndicator.test.tsx
+├── screens/
+│   ├── OnboardingContainer.tsx     # Main onboarding container
+│   ├── Step1GoalScreen.tsx         # North Star goal input
+│   ├── Step2BarriersScreen.tsx     # Barrier selection
+│   └── Step3HabitsScreen.tsx       # Habit generation & display
+├── store/
+│   ├── onboardingStore.ts          # Zustand store
+│   └── __tests__/
+│       └── onboardingStore.test.ts
+├── types/
+│   └── onboarding.ts               # TypeScript interfaces
+└── utils/
+    ├── validation.ts                # Validation functions
+    └── __tests__/
+        └── validation.test.ts
 ```
 
-## Prerequisites
+## Getting Started
 
-- Node.js 18+ and npm/yarn
-- Expo CLI (`npm install -g expo-cli`)
-- iOS Simulator (macOS) or Android Emulator
-- For iOS: Xcode
-- For Android: Android Studio
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI (optional, installed as dependency)
 
-## Installation
-
-### 1. Install Dependencies
+### Installation
 
 ```bash
-cd apps/mobile
+# Install dependencies
 npm install
-```
 
-Or from the root directory:
-
-```bash
-npm install:all
-```
-
-## Development
-
-### Start Development Server
-
-```bash
+# Start the development server
 npm start
-```
 
-This will launch the Expo CLI with options to:
-- Open in iOS Simulator: Press `i`
-- Open in Android Emulator: Press `a`
-- Open in web browser: Press `w`
-- Scan QR code with Expo Go app: Use QR code scanner
-
-### Run on iOS Simulator
-
-```bash
+# Run on iOS simulator
 npm run ios
-```
 
-### Run on Android Emulator
-
-```bash
+# Run on Android emulator
 npm run android
-```
 
-### Run on Web
-
-```bash
+# Run in web browser
 npm run web
 ```
 
-## Available Scripts
-
-### Development
-- `npm start` - Start Expo development server
-- `npm run ios` - Run on iOS Simulator
-- `npm run android` - Run on Android Emulator
-- `npm run web` - Run web version
-
-### Code Quality
-- `npm run lint` - Run ESLint
-- `npm run type-check` - Run TypeScript type checking
-- `npm test` - Run Jest tests
-- `npm run format` - Format code with Prettier
-
-### Building
-- `npm run eject` - Eject from Expo (not recommended for most projects)
-
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the `apps/mobile` directory:
-
-```env
-EXPO_PUBLIC_API_URL=https://api.example.com
-EXPO_PUBLIC_ENV=development
-```
-
-Environment variables must be prefixed with `EXPO_PUBLIC_` to be accessible in the app.
-
-## Architecture
-
-### Navigation Structure
-
-The app uses a three-level navigation hierarchy:
-
-```
-RootNavigator
-├── Auth Stack (when not logged in)
-│   ├── Login
-│   ├── Register
-│   └── Forgot Password
-├── Onboarding Stack (when logged in but onboarding incomplete)
-│   └── Onboarding
-└── Main Stack (when fully authenticated)
-    ├── Journey Tab
-    │   └── Journey Screen
-    └── Profile Tab
-        └── Profile Screen
-```
-
-### State Management
-
-State is managed using Zustand with two main stores:
-
-- **AuthStore** (`src/store/authStore.ts`): Manages user authentication state, login/logout
-- **AppStore** (`src/store/appStore.ts`): Manages global app state like onboarding status
-
-### API Integration
-
-The app uses Axios with React Query for data fetching:
-
-```typescript
-// Simple usage example
-const { data, isLoading } = useQuery({
-  queryKey: ['journeys'],
-  queryFn: () => apiClient.get('/journeys'),
-});
-```
-
-### Theme System
-
-Centralized theme tokens are defined in `src/themes/`:
-
-```typescript
-import theme from '@themes/index';
-
-// Use in components
-<View style={{ backgroundColor: theme.colors.background }}>
-  <Text style={{ color: theme.colors.text }}>Hello</Text>
-</View>
-```
-
-## TypeScript Path Aliases
-
-The project uses path aliases for cleaner imports:
-
-```typescript
-// Instead of:
-import Button from '../../../components/Button';
-
-// Use:
-import Button from '@components/Button';
-```
-
-Available aliases:
-- `@screens/*` - Screen components
-- `@components/*` - Reusable UI components
-- `@services/*` - External services (API, etc.)
-- `@store/*` - Zustand stores
-- `@themes/*` - Theme configuration
-- `@navigation/*` - Navigation configuration
-- `@types/*` - TypeScript types
-- `@utils/*` - Utility functions
-
-## Testing
-
-Run tests with:
+### Running Tests
 
 ```bash
+# Run all tests
 npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm test -- --coverage
 ```
 
-Tests are discovered and run by Jest using the pattern:
-- `**/__tests__/**/*.[jt]s?(x)`
-- `**/?(*.)+(spec|test).[jt]s?(x)`
+## API Integration
 
-## Code Style
+The habit generation endpoint is currently stubbed in `src/api/habits.ts`. To integrate with a real backend:
 
-### ESLint & Prettier
+1. Set the `API_BASE_URL` environment variable
+2. Uncomment the actual API call code in `generateHabits` function
+3. Update the request/response types as needed
 
-The project uses ESLint and Prettier for code consistency:
-
-```bash
-npm run lint       # Check linting issues
-npm run format     # Format code automatically
+Example stubbed endpoint:
+```typescript
+POST /habits/generate
+Body: {
+  goal: string,
+  barriers: string[]
+}
+Response: {
+  foundational: Habit[],
+  goalSpecific: Habit[],
+  barrierTargeting: Habit[]
+}
 ```
 
-### TypeScript
+## State Management
 
-Type checking is available via:
+The onboarding state is managed with Zustand and includes:
+- Current step (1-3)
+- North Star goal text
+- Selected preset barriers
+- Custom barriers
+- Generated habits
+- Loading and error states
 
-```bash
-npm run type-check
-```
+State is automatically persisted to AsyncStorage and restored on app launch.
 
-## Troubleshooting
+## Validation Rules
 
-### Metro Bundler Issues
+### North Star Goal
+- Must not be empty
+- Minimum 3 characters
+- Maximum 200 characters
 
-If you encounter bundler issues, clear the cache:
+### Barriers
+- At least 1 barrier must be selected
+- Maximum 10 barriers total (preset + custom)
+- Custom barriers are trimmed and deduplicated
 
-```bash
-expo start --clear
-```
+## Design Decisions
 
-### Port Already in Use
+1. **Zustand over Redux**: Simpler API, less boilerplate, built-in TypeScript support
+2. **AsyncStorage**: Native solution for simple key-value persistence
+3. **Stubbed API**: Allows frontend development and testing without backend dependency
+4. **Component-based architecture**: Reusable components (Button, Chip, etc.)
+5. **Comprehensive testing**: Unit tests for store, utilities, and components
 
-By default, Expo uses port 19000. If it's in use:
+## Future Enhancements
 
-```bash
-expo start --port 19001
-```
-
-### Dependencies Issues
-
-Clear and reinstall dependencies:
-
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### TypeScript Errors
-
-Make sure you have the correct types installed:
-
-```bash
-npm install --save-dev @types/react @types/react-native @types/node
-```
-
-## Building for Production
-
-### For iOS
-
-```bash
-eas build --platform ios
-```
-
-### For Android
-
-```bash
-eas build --platform android
-```
-
-(Requires EAS CLI setup)
-
-## Performance Optimization
-
-The app includes several performance optimizations:
-
-- React Query caching (5-minute stale time, 30-minute cache time)
-- Navigation optimization with proper memoization
-- Theme tokens prevent excessive re-renders
-- LazyLoading and code splitting ready
-
-## Contributing
-
-When adding new features:
-
-1. Follow the existing project structure
-2. Use TypeScript for all new code
-3. Add proper typing and use path aliases
-4. Run linting and formatting before committing
-5. Ensure tests pass
-
-## Resources
-
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Navigation](https://reactnavigation.org/)
-- [Zustand](https://github.com/pmndrs/zustand)
-- [React Query](https://tanstack.com/query/latest)
-- [TypeScript](https://www.typescriptlang.org/)
-
-## License
-
-MIT
+- [ ] Connect to real backend API
+- [ ] Add animations between steps
+- [ ] Support for habit editing after generation
+- [ ] Analytics tracking for user behavior
+- [ ] Accessibility improvements (screen reader support)
+- [ ] Internationalization (i18n)
+- [ ] Dark mode support
+- [ ] Onboarding skip option
+- [ ] Progress save/restore across devices
