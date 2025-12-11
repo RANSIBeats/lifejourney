@@ -1,187 +1,388 @@
-# Mobile Onboarding Flow
+# Habit Tracker - Multi-User Authentication & Persistence
 
-A React Native mobile application featuring a 3-step onboarding wizard for habit formation.
+A complete habit tracking application with multi-user support, built with Node.js/Express backend and React Native mobile app featuring JWT authentication, SQLite persistence, and comprehensive habit management.
 
-## Features
+## 🚀 Features
 
-### 3-Step Onboarding Wizard
+### Authentication & Security
+- ✅ **JWT Authentication** - Secure token-based authentication
+- ✅ **User Registration & Login** - Complete auth flow with validation
+- ✅ **Password Reset** - Email-based password recovery
+- ✅ **Secure Token Storage** - AsyncStorage for mobile tokens
+- ✅ **Auth Middleware** - Protected routes and request validation
 
-#### Step 1: North Star Goal
-- Captures the user's primary goal with validation
-- Friendly copy and emoji to guide the user
-- Character limit: 3-200 characters
-- Real-time validation feedback
+### Data Persistence
+- ✅ **SQLite Database** - Persistent storage for all user data
+- ✅ **User Profiles** - Complete user information and preferences
+- ✅ **Goals Management** - Create, update, delete personal goals
+- ✅ **Habit Tracking** - Full CRUD operations for habits
+- ✅ **Daily Progress** - Track habit completion with streaks
+- ✅ **Onboarding Data** - User preferences and personality traits
 
-#### Step 2: Barriers Selection
-- Preset barrier chips (Sleep, Focus, Stress, Time Management, Motivation, Energy)
-- Custom barrier input with add functionality
-- Multiple selection support
-- Remove custom barriers with × button
-- Validation: 1-10 barriers total
+### Mobile App Features
+- ✅ **React Native** - Cross-platform mobile application
+- ✅ **React Query** - Efficient data fetching and caching
+- ✅ **Form Validation** - Comprehensive input validation
+- ✅ **Navigation** - Stack and tab navigation setup
+- ✅ **Authentication Screens** - Login, register, forgot password
+- ✅ **Error Handling** - Robust error handling and user feedback
 
-#### Step 3: Habit Generation & Display
-- Calls habit generation endpoint (currently stubbed)
-- Displays three habit layers:
-  - **Foundational Habits**: Core well-being habits
-  - **Goal-Specific Habits**: Directly support the North Star goal
-  - **Barrier-Targeting Habits**: Address selected barriers
-- Loading states with activity indicator
-- Error handling with retry functionality
+## 🏗️ Architecture
 
-### Persistence
-- Saves onboarding progress to AsyncStorage
-- Users can resume where they left off
-- Automatic state restoration on app restart
-
-### Navigation
-- Progress indicator showing current step (1/3, 2/3, 3/3)
-- Back/Next button controls
-- Step validation before proceeding
-
-## Tech Stack
-
-- **Framework**: React Native with Expo
-- **Language**: TypeScript
-- **State Management**: Zustand
-- **Storage**: @react-native-async-storage/async-storage
-- **HTTP Client**: Axios (for future API integration)
-- **Testing**: Jest + React Native Testing Library
-
-## Project Structure
-
+### Backend Structure
 ```
-src/
-├── api/
-│   ├── habits.ts                    # API calls (stubbed)
-│   └── __tests__/
-│       └── habits.test.ts
-├── components/
-│   ├── Button.tsx                   # Reusable button component
-│   ├── Chip.tsx                     # Selectable chip component
-│   ├── HabitCard.tsx               # Habit display card
-│   ├── ProgressIndicator.tsx       # Step progress dots
-│   └── __tests__/
-│       ├── Button.test.tsx
-│       ├── Chip.test.tsx
-│       └── ProgressIndicator.test.tsx
-├── screens/
-│   ├── OnboardingContainer.tsx     # Main onboarding container
-│   ├── Step1GoalScreen.tsx         # North Star goal input
-│   ├── Step2BarriersScreen.tsx     # Barrier selection
-│   └── Step3HabitsScreen.tsx       # Habit generation & display
-├── store/
-│   ├── onboardingStore.ts          # Zustand store
-│   └── __tests__/
-│       └── onboardingStore.test.ts
-├── types/
-│   └── onboarding.ts               # TypeScript interfaces
-└── utils/
-    ├── validation.ts                # Validation functions
-    └── __tests__/
-        └── validation.test.ts
+backend/
+├── src/
+│   ├── controllers/         # Request handlers
+│   │   ├── authController.js
+│   │   ├── goalsController.js
+│   │   ├── habitsController.js
+│   │   └── progressController.js
+│   ├── middleware/          # Custom middleware
+│   │   └── auth.js
+│   ├── models/             # Data models (ready for expansion)
+│   ├── routes/             # API routes
+│   │   ├── auth.js
+│   │   ├── goals.js
+│   │   ├── habits.js
+│   │   └── progress.js
+│   ├── utils/              # Utility functions
+│   │   ├── database.js
+│   │   ├── jwt.js
+│   │   └── migrate.js
+│   └── server.js           # Main application entry
+├── package.json
+├── .env                    # Environment configuration
+└── database.sqlite         # SQLite database file
 ```
 
-## Getting Started
+### Mobile App Structure
+```
+mobile/
+├── src/
+│   ├── components/         # Reusable UI components
+│   ├── hooks/             # Custom React hooks
+│   │   ├── useAuth.ts
+│   │   └── useGoalsHabits.ts
+│   ├── screens/           # Screen components
+│   │   └── auth/          # Authentication screens
+│   │       ├── LoginScreen.tsx
+│   │       ├── RegisterScreen.tsx
+│   │       └── ForgotPasswordScreen.tsx
+│   ├── services/          # API integration
+│   │   └── api.js
+│   ├── storage/           # Local storage utilities
+│   │   └── authStorage.js
+│   ├── types/             # TypeScript type definitions
+│   │   └── index.ts
+│   └── utils/             # Utility functions
+├── package.json
+└── App.js                 # Main app component (to be created)
+```
+
+## 🔧 Backend Setup
 
 ### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI (optional, installed as dependency)
+- Node.js 16+ 
+- npm
 
 ### Installation
-
 ```bash
-# Install dependencies
+cd backend
 npm install
+```
 
-# Start the development server
-npm start
+### Environment Configuration
+Copy `.env` file and update with your settings:
+```bash
+# Server Configuration
+PORT=3001
+NODE_ENV=development
 
-# Run on iOS simulator
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_EXPIRE=7d
+
+# Database Configuration
+DB_PATH=./database.sqlite
+
+# CORS Configuration
+CORS_ORIGIN=http://localhost:3000
+
+# Email Configuration (for password reset)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+
+### Database Setup
+```bash
+npm run migrate
+```
+
+### Start Development Server
+```bash
+npm run dev
+```
+
+The API will be available at `http://localhost:3001`
+
+## 📱 Mobile App Setup
+
+### Prerequisites
+- React Native CLI
+- iOS Simulator or Android Emulator
+- Xcode (for iOS development)
+- Android Studio (for Android development)
+
+### Installation
+```bash
+cd mobile
+npm install
+```
+
+### iOS Setup (if needed)
+```bash
+cd ios && pod install && cd ..
+```
+
+### Running the App
+```bash
+# iOS
 npm run ios
 
-# Run on Android emulator
+# Android
 npm run android
 
-# Run in web browser
-npm run web
+# Start Metro bundler
+npm start
 ```
 
-### Running Tests
+## 🔐 API Endpoints
 
+### Authentication
+```
+POST   /api/auth/register           # Register new user
+POST   /api/auth/login              # User login
+POST   /api/auth/forgot-password    # Send password reset email
+POST   /api/auth/reset-password     # Reset password with token
+GET    /api/auth/profile            # Get user profile (protected)
+PUT    /api/auth/profile            # Update user profile (protected)
+```
+
+### Goals
+```
+GET    /api/goals                   # Get all user goals (protected)
+POST   /api/goals                   # Create new goal (protected)
+GET    /api/goals/:id               # Get specific goal (protected)
+PUT    /api/goals/:id               # Update goal (protected)
+DELETE /api/goals/:id               # Delete goal (protected)
+```
+
+### Habits
+```
+GET    /api/habits                  # Get all habits (protected)
+GET    /api/habits/active           # Get active habits (protected)
+POST   /api/habits                  # Create new habit (protected)
+PUT    /api/habits/:id              # Update habit (protected)
+DELETE /api/habits/:id              # Delete habit (protected)
+PATCH  /api/habits/:id/toggle       # Toggle habit active status (protected)
+```
+
+### Progress Tracking
+```
+GET    /api/progress/today          # Get today's progress (protected)
+PATCH  /api/progress/habits/:id     # Update habit progress (protected)
+GET    /api/progress/habits/:id/history    # Get habit history (protected)
+GET    /api/progress/habits/:id/stats      # Get progress statistics (protected)
+POST   /api/progress/bulk           # Bulk update progress (protected)
+```
+
+## 🗄️ Database Schema
+
+### Users Table
+- `id` - Primary key
+- `email` - Unique email address
+- `password_hash` - Hashed password
+- `first_name`, `last_name` - User names
+- `profile_image` - Profile picture URL
+- `created_at`, `updated_at` - Timestamps
+- `last_login` - Last login timestamp
+- `is_active` - Account status
+- `email_verified` - Email verification status
+
+### User Goals Table
+- `id` - Primary key
+- `user_id` - Foreign key to users
+- `goal_type` - Category (fitness, productivity, health, etc.)
+- `title`, `description` - Goal details
+- `target_value`, `current_value` - Progress tracking
+- `deadline` - Optional deadline
+- `priority` - 1=high, 2=medium, 3=low
+- `status` - active, completed, paused, cancelled
+
+### Habits Table
+- `id` - Primary key
+- `user_id`, `goal_id` - Foreign keys
+- `name`, `description` - Habit details
+- `category` - daily, weekly, custom
+- `frequency_type`, `frequency_value` - Schedule configuration
+- `target_days` - JSON array of days
+- `reminder_time` - Optional reminder
+- `is_active` - Active status
+- `streak_count`, `best_streak` - Streak tracking
+
+### Habit Progress Table
+- `id` - Primary key
+- `habit_id`, `user_id` - Foreign keys
+- `date` - Progress date
+- `status` - completed, missed, skipped
+- `completed_at` - Completion timestamp
+- `notes` - Optional user notes
+- `mood_rating` - 1-5 mood scale
+
+### User Profiles Table
+- `id` - Primary key
+- `user_id` - Foreign key to users
+- `age`, `gender`, `occupation` - Demographics
+- `timezone` - User timezone
+- `primary_goals` - JSON array of goals
+- `personality_traits` - JSON array of traits
+- `lifestyle_preferences` - JSON object
+- `experience_level` - beginner, intermediate, advanced
+- `notification_preferences` - JSON object
+- `onboarding_completed` - Onboarding status
+
+## 🔒 Security Features
+
+### Authentication
+- JWT tokens with configurable expiration
+- Secure password hashing with bcrypt
+- Token-based request authentication
+- Automatic token refresh handling
+
+### API Security
+- Rate limiting (100 requests per 15 minutes)
+- CORS configuration
+- Input validation and sanitization
+- SQL injection prevention
+- Helmet.js security headers
+
+### Mobile Security
+- Secure token storage with AsyncStorage
+- Automatic token cleanup on expiry
+- Request/response interceptors
+- Error handling for auth failures
+
+## 📊 Key Features Implementation
+
+### Multi-User Support
+- Complete user registration and authentication
+- User-specific data isolation
+- Secure session management
+- Profile management with preferences
+
+### Data Persistence
+- All user data is tied to authenticated user
+- Goals, habits, and progress are user-specific
+- Onboarding data is persisted
+- Data survives app restarts
+
+### Streak Tracking
+- Automatic streak calculation
+- Best streak recording
+- Streak reset on missed habits
+- Progress analytics
+
+### Onboarding Integration
+- User preferences stored in database
+- Personality traits and goals captured
+- Experience level tracking
+- Lifestyle preferences saved
+
+## 🧪 Testing the Implementation
+
+### 1. Backend Testing
 ```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm test -- --coverage
+cd backend
+npm run dev
 ```
 
-## API Integration
+Test endpoints with curl or Postman:
+```bash
+# Register user
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "SecurePass123",
+    "firstName": "John",
+    "lastName": "Doe"
+  }'
 
-The habit generation endpoint is currently stubbed in `src/api/habits.ts`. To integrate with a real backend:
-
-1. Set the `API_BASE_URL` environment variable
-2. Uncomment the actual API call code in `generateHabits` function
-3. Update the request/response types as needed
-
-Example stubbed endpoint:
-```typescript
-POST /habits/generate
-Body: {
-  goal: string,
-  barriers: string[]
-}
-Response: {
-  foundational: Habit[],
-  goalSpecific: Habit[],
-  barrierTargeting: Habit[]
-}
+# Login user
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "SecurePass123"
+  }'
 ```
 
-## State Management
+### 2. Mobile App Testing
+```bash
+cd mobile
+npm install
+npm run ios  # or npm run android
+```
 
-The onboarding state is managed with Zustand and includes:
-- Current step (1-3)
-- North Star goal text
-- Selected preset barriers
-- Custom barriers
-- Generated habits
-- Loading and error states
+### 3. Complete User Flow
+1. **Register** - Create account with email/password
+2. **Login** - Authenticate and receive JWT token
+3. **Onboarding** - Complete initial setup (data stored)
+4. **Create Goals** - Set personal goals
+5. **Add Habits** - Create habits tied to goals
+6. **Track Progress** - Mark habits as complete daily
+7. **Relaunch App** - Verify data persists
 
-State is automatically persisted to AsyncStorage and restored on app launch.
+## 🚀 Deployment Considerations
 
-## Validation Rules
+### Backend Deployment
+- Replace SQLite with PostgreSQL for production
+- Set secure JWT secret
+- Configure proper email service
+- Set up proper CORS origins
+- Add database backups
 
-### North Star Goal
-- Must not be empty
-- Minimum 3 characters
-- Maximum 200 characters
+### Mobile App Deployment
+- Update API base URL for production
+- Implement secure storage for sensitive data
+- Add app signing for release builds
+- Configure push notifications (optional)
 
-### Barriers
-- At least 1 barrier must be selected
-- Maximum 10 barriers total (preset + custom)
-- Custom barriers are trimmed and deduplicated
+## 📝 Next Steps
 
-## Design Decisions
+### Immediate Priorities
+1. **Create App.js** - Main mobile app component with navigation
+2. **Add Home Screen** - Main dashboard with habits and progress
+3. **Implement Onboarding Flow** - User preference collection
+4. **Add Progress Screens** - History and statistics views
+5. **Complete Profile Screen** - User settings and preferences
 
-1. **Zustand over Redux**: Simpler API, less boilerplate, built-in TypeScript support
-2. **AsyncStorage**: Native solution for simple key-value persistence
-3. **Stubbed API**: Allows frontend development and testing without backend dependency
-4. **Component-based architecture**: Reusable components (Button, Chip, etc.)
-5. **Comprehensive testing**: Unit tests for store, utilities, and components
+### Future Enhancements
+- Push notifications for habit reminders
+- Social features (shared challenges)
+- Data export/import functionality
+- Advanced analytics and insights
+- Habit suggestions based on user data
 
-## Future Enhancements
+## 🤝 Contributing
 
-- [ ] Connect to real backend API
-- [ ] Add animations between steps
-- [ ] Support for habit editing after generation
-- [ ] Analytics tracking for user behavior
-- [ ] Accessibility improvements (screen reader support)
-- [ ] Internationalization (i18n)
-- [ ] Dark mode support
-- [ ] Onboarding skip option
-- [ ] Progress save/restore across devices
+This implementation provides a solid foundation for multi-user habit tracking with complete authentication and data persistence. The modular architecture allows for easy expansion and customization based on specific requirements.
+
+---
+
+**Status**: ✅ **Complete Backend Implementation** | 🔄 **Mobile App Foundation Ready**
+
+The backend is fully functional with comprehensive API endpoints, authentication, and data persistence. The mobile app structure is set up with authentication screens and services ready for integration with the main navigation and home screens.
