@@ -1,35 +1,67 @@
+export interface BarrierInput {
+  title: string;
+  description?: string;
+  type?: string;
+}
+
 export interface GenerateHabitsRequest {
-  userId: string;
   goalTitle: string;
   goalDescription?: string;
   goalCategory?: string;
-  barriers: Array<{
-    title: string;
-    description?: string;
-    type?: string;
-  }>;
+  barriers: BarrierInput[];
 }
 
+export type HabitCategory = 'foundational' | 'goal-specific' | 'barrier-targeting';
+export type HabitPhase = 1 | 2 | 3 | 4;
+
 export interface HabitResponse {
+  id: string;
   title: string;
   description: string;
-  category: 'foundational' | 'goal-specific' | 'barrier-targeting';
-  phase: 1 | 2 | 3 | 4;
+  category: HabitCategory;
+  phase: HabitPhase;
   frequency: string;
   duration?: number;
   priority: number;
+}
+
+export interface HabitSummary {
+  foundationalCount: number;
+  goalSpecificCount: number;
+  barrierTargetingCount: number;
+  totalCount: number;
 }
 
 export interface GenerateHabitsResponse {
   planId: string;
   goalId: string;
   habits: HabitResponse[];
-  summary: {
-    foundationalCount: number;
-    goalSpecificCount: number;
-    barrierTargetingCount: number;
-    totalCount: number;
+  summary: HabitSummary;
+}
+
+export type PlanPhaseStatus = 'pending' | 'active' | 'completed' | 'skipped';
+
+export interface PlanPhaseDetail {
+  id: string;
+  phaseNumber: HabitPhase;
+  startDate?: string | null;
+  endDate?: string | null;
+  status: PlanPhaseStatus;
+}
+
+export interface HabitPlanDetails {
+  planId: string;
+  goalId: string;
+  title?: string | null;
+  description?: string | null;
+  phaseCounts: {
+    phase1: number;
+    phase2: number;
+    phase3: number;
+    phase4: number;
   };
+  phases: PlanPhaseDetail[];
+  habits: HabitResponse[];
 }
 
 export interface OpenAIHabitGeneration {

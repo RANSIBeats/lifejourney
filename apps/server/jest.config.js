@@ -12,6 +12,7 @@ module.exports = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@middleware/(.*)$': '<rootDir>/src/middleware/$1',
+    '^@lib/(.*)$': '<rootDir>/src/lib/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

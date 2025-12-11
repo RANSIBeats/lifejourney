@@ -28,7 +28,7 @@ The Habit AI Server is a Node.js + TypeScript backend service that generates per
 │  └──────────────────┘  └─────────────────────────────────────┘  │
 ├─────────────────────────────────────────────────────────────────┤
 │                    Data Layer                                    │
-│        Prisma ORM + SQLite/PostgreSQL Database                   │
+│        Supabase (Postgres) via @supabase/supabase-js             │
 ├─────────────────────────────────────────────────────────────────┤
 │ User │ Goal │ Barrier │ Habit │ HabitPlan                        │
 └─────────────────────────────────────────────────────────────────┘

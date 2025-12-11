@@ -7,7 +7,6 @@ export const BarrierSchema = z.object({
 });
 
 export const GenerateHabitsRequestSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
   goalTitle: z.string().min(1, 'Goal title is required'),
   goalDescription: z.string().optional(),
   goalCategory: z.string().optional(),
