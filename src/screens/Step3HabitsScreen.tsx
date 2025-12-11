@@ -5,7 +5,7 @@ import { Button } from '../components/Button';
 import { HabitCard } from '../components/HabitCard';
 
 export const Step3HabitsScreen: React.FC = () => {
-  const { habits, isLoading, error, submitOnboarding, prevStep, resetOnboarding } =
+  const { habits, isLoading, error, submitOnboarding, prevStep, completeOnboarding } =
     useOnboardingStore();
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export const Step3HabitsScreen: React.FC = () => {
   }, []);
 
   const handleComplete = () => {
-    resetOnboarding();
+    completeOnboarding();
   };
 
   const handleRetry = () => {

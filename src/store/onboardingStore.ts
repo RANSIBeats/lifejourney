@@ -1,9 +1,39 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { OnboardingState, OnboardingPayload, HabitLayers } from '../types/onboarding';
+import { OnboardingState, OnboardingPayload, HabitLayers, JourneyPlan, JourneyPhase, JOURNEY_PHASES, PhaseStatus } from '../types/onboarding';
 import { generateHabits } from '../api/habits';
 
 const STORAGE_KEY = '@onboarding_state';
+
+// Helper function to distribute habits across phases
+const getHabitsForPhase = (habits: HabitLayers, phaseIndex: number): Habit[] => {
+  const allHabits = [
+    ...habits.foundational,
+    ...habits.goalSpecific,
+    ...habits.barrierTargeting,
+  ];
+
+  switch (phaseIndex) {
+    case 0: // Reset & Rebuild - focus on foundational habits
+      return habits.foundational.slice(0, Math.ceil(habits.foundational.length * 0.6));
+    case 1: // Build Momentum - foundational + some goal-specific
+      return [
+        ...habits.foundational.slice(Math.ceil(habits.foundational.length * 0.6)),
+        ...habits.goalSpecific.slice(0, Math.ceil(habits.goalSpecific.length * 0.7)),
+      ];
+    case 2: // Polish & Prepare - goal-specific + barrier targeting
+      return [
+        ...habits.goalSpecific.slice(Math.ceil(habits.goalSpecific.length * 0.7)),
+        ...habits.barrierTargeting.slice(0, Math.ceil(habits.barrierTargeting.length * 0.8)),
+      ];
+    case 3: // Ready Window - all remaining habits
+      return [
+        ...habits.barrierTargeting.slice(Math.ceil(habits.barrierTargeting.length * 0.8)),
+      ];
+    default:
+      return [];
+  }
+};
 
 interface OnboardingActions {
   setStep: (step: number) => void;
@@ -14,6 +44,9 @@ interface OnboardingActions {
   nextStep: () => void;
   prevStep: () => void;
   submitOnboarding: () => Promise<void>;
+  createJourneyPlan: (habits: HabitLayers) => void;
+  updatePhaseStatus: (phaseId: string, status: PhaseStatus) => void;
+  completeOnboarding: () => void;
   loadFromStorage: () => Promise<void>;
   saveToStorage: () => Promise<void>;
   resetOnboarding: () => void;
@@ -27,6 +60,8 @@ const initialState: OnboardingState = {
   isLoading: false,
   error: null,
   habits: null,
+  journey: null,
+  isOnboardingComplete: false,
 };
 
 export const useOnboardingStore = create<OnboardingState & OnboardingActions>((set, get) => ({
@@ -94,6 +129,11 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
       };
 
       const habits = await generateHabits(payload);
+      
+      // Create journey plan from generated habits
+      const { createJourneyPlan } = get();
+      createJourneyPlan(habits);
+      
       set({ habits, isLoading: false });
       get().saveToStorage();
     } catch (error) {
@@ -102,6 +142,59 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
         isLoading: false,
       });
     }
+  },
+
+  createJourneyPlan: (habits: HabitLayers) => {
+    const { northStarGoal } = get();
+    const startDate = new Date().toISOString();
+    
+    // Distribute habits across phases
+    const phases: JourneyPhase[] = JOURNEY_PHASES.map((phaseTemplate, index) => {
+      const phaseHabits = getHabitsForPhase(habits, index);
+      const startDateObj = new Date(startDate);
+      const endDateObj = new Date(startDateObj);
+      endDateObj.setDate(endDateObj.getDate() + (index + 1) * 7); // 7 days per phase
+      
+      return {
+        ...phaseTemplate,
+        status: index === 0 ? 'current' : 'locked',
+        startDate: startDateObj.toISOString(),
+        endDate: endDateObj.toISOString(),
+        habitCount: phaseHabits.length,
+        habits: phaseHabits,
+      };
+    });
+
+    const journey: JourneyPlan = {
+      id: `journey-${Date.now()}`,
+      name: `${northStarGoal} Journey`,
+      startDate,
+      phases,
+    };
+
+    set({ journey });
+  },
+
+  updatePhaseStatus: (phaseId: string, status: PhaseStatus) => {
+    const { journey } = get();
+    if (!journey) return;
+
+    const updatedPhases = journey.phases.map(phase => ({
+      ...phase,
+      status: phase.id === phaseId ? status : phase.status,
+    }));
+
+    set({
+      journey: {
+        ...journey,
+        phases: updatedPhases,
+      },
+    });
+  },
+
+  completeOnboarding: () => {
+    set({ isOnboardingComplete: true });
+    get().saveToStorage();
   },
 
   loadFromStorage: async () => {
@@ -118,10 +211,10 @@ export const useOnboardingStore = create<OnboardingState & OnboardingActions>((s
 
   saveToStorage: async () => {
     try {
-      const { step, northStarGoal, barriers, customBarriers, habits } = get();
+      const { step, northStarGoal, barriers, customBarriers, habits, journey, isOnboardingComplete } = get();
       await AsyncStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ step, northStarGoal, barriers, customBarriers, habits })
+        JSON.stringify({ step, northStarGoal, barriers, customBarriers, habits, journey, isOnboardingComplete })
       );
     } catch (error) {
       console.error('Failed to save onboarding state:', error);
