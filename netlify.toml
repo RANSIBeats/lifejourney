@@ -4,11 +4,4 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NODE_ENV = "production"
   SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,PORT"
-
-[context.production.environment]
-  NODE_ENV = "production"
-
-[[plugins]]
-  package = "@netlify/plugin-no-more-404"
