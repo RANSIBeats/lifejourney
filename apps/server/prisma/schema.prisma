@@ -1,0 +1,107 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  goals     Goal[]
+  barriers  Barrier[]
+  habits    Habit[]
+  plans     HabitPlan[]
+
+  @@index([email])
+}
+
+model Goal {
+  id        String     @id @default(cuid())
+  userId    String
+  title     String
+  description String?
+  category  String?    // health, career, personal, financial, etc.
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barriers  Barrier[]
+  habits    Habit[]
+  plans     HabitPlan[]
+
+  @@index([userId])
+}
+
+model Barrier {
+  id        String     @id @default(cuid())
+  userId    String
+  goalId    String
+  title     String
+  description String?
+  type      String?    // psychological, environmental, social, time-based, etc.
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  habits    Habit[]
+
+  @@index([userId])
+  @@index([goalId])
+}
+
+model Habit {
+  id        String     @id @default(cuid())
+  userId    String
+  goalId    String
+  barrierId String?
+  title     String
+  description String?
+  category  String     // foundational, goal-specific, barrier-targeting
+  phase     Int        // 1-4 journey phases
+  frequency String?    // daily, weekly, specific days
+  duration  Int?       // minutes
+  priority  Int?       // 1-10
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  barrier   Barrier?   @relation(fields: [barrierId], references: [id], onDelete: SetNull)
+  plan      HabitPlan? @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId    String?
+
+  @@index([userId])
+  @@index([goalId])
+  @@index([barrierId])
+  @@index([category])
+  @@index([phase])
+}
+
+model HabitPlan {
+  id        String     @id @default(cuid())
+  userId    String
+  goalId    String
+  title     String?
+  description String?
+  phase1Count Int     @default(0)
+  phase2Count Int     @default(0)
+  phase3Count Int     @default(0)
+  phase4Count Int     @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal      Goal       @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  habits    Habit[]
+
+  @@index([userId])
+  @@index([goalId])
+}
